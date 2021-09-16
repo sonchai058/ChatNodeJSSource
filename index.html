@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+  <head>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.0/css/all.css" integrity="sha384-lZN37f5QGtY3VHgisS14W3ExzMWZxybE1SJSEsQp9S+oqd12jhcu+A56Ebc1zFSJ" crossorigin="anonymous">
+
+    <title>Bot Trainer</title>
+    <style>
+      #form { background: rgba(0, 0, 0, 0.15); padding: 0.25rem; position: fixed; bottom: 0; left: 0; right: 0; display: flex; height: 3rem; box-sizing: border-box; backdrop-filter: blur(10px); }
+      #input:focus { outline: none; }
+      #messages { list-style-type: none; margin: 0; padding: 0; }
+      #messages > li { padding: 0.5rem 1rem; }
+      #messages > li:nth-child(odd) { background: #efefef; }
+    </style>
+
+  </head>
+  <body>
+    <ul id="messages"></ul>
+    <form id="form" action="">
+      <input type="text" class="form-control" id="input" autocomplete="off" /><button class="btn btn-success" type="button" id="bt_send">Send</button>
+    </form>
+
+
+  <!-- The Modal -->
+  <div class="modal" id="myModal">
+    <div class="modal-dialog">
+      <div class="modal-content">
+      
+  
+        
+        <!-- Modal body -->
+        <div class="modal-body">
+          <div class="row">
+            <div class="col-10">
+              <input type="text" id="acuser" class="form-control" name="user" placeholder="Input You Name">
+            </div>
+            <div class="col-2">
+              <button style="width:100%" id="bt_nameSave" type="button" class="btn btn-danger">OK</button>
+            </div>
+          </div>
+        </div>
+
+        
+      </div>
+    </div>
+  </div>
+
+
+
+    <script src="/socket.io/socket.io.js"></script>
+
+    <script>
+      var ACUSER = ""; 
+    $('#myModal').on('hidden.bs.modal', function () {
+      if(ACUSER=="") {
+        $('#myModal').modal('show');
+        $("#acuser").focus();
+      }
+      return false;
+    });
+    $("#bt_nameSave").click(function(){
+      if($("#acuser").val()!='') {
+        ACUSER = $("#acuser").val();
+        $('#myModal').modal('hide');
+      }else {
+        $('#myModal').modal('show');
+        $("#acuser").focus();
+      }
+    });
+    $(document).ready(function(){
+
+        $('#myModal').modal('show');
+        $("#acuser").focus();
+
+    });
+    </script>
+
+    <script>
+      var socket = io();
+
+      var messages = document.getElementById('messages');
+      var form = document.getElementById('form');
+      var input = document.getElementById('input');
+
+      $("#bt_send").click(function(){
+        if (input.value) {
+          socket.emit('chat message', {'ACUSER':ACUSER,'txt':input.value});
+          input.value = '';
+        }
+      });
+      /*
+      form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        if (input.value) {
+          socket.emit('chat message', input.value);
+          input.value = '';
+        }
+      });
+      */
+
+      socket.on('chat message', function(msg) {
+        //var item = document.createElement('li');
+        //item.textContent = msg;
+        //messages.appendChild(item);
+        console.log(msg);
+        if(ACUSER!=msg.ACUSER) {
+         $('<li><i style="color:#598AF2" class="fas fa-user"></i> ('+msg.ACUSER+') '+msg.txt+'</li>').appendTo("#messages");
+        }else {
+          $('<li class="text-right"><i style="color:#28B463" class="fas fa-user"></i> '+msg.txt+'</li>').appendTo("#messages");
+        }
+
+        window.scrollTo(0, document.body.scrollHeight);
+      });
+
+      socket.on('new user', function(msg) {
+        console.log("New User!");
+      });
+
+
+      $(document).on('keypress',function(e) {
+          if(e.which == 13) {
+            if (input.value && ACUSER!='') {
+              socket.emit('chat message', {'ACUSER':ACUSER,'txt':input.value});
+              input.value = '';
+            }
+            return false;
+          }
+      });
+    </script>
+  </body>
+</html>
